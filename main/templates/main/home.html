@@ -1,0 +1,22 @@
+{% extends "base/base.html" %}
+
+{% block title %}Home | Simulate Agents{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <h1 class="text-center mb-4">Simulate Agents</h1>
+        
+        <div class="mb-5">
+            <h3>What is this?</h3>
+            <ul>
+                <li>An experimental platform for running AI agents in various environments.</li>
+                <li>Let's define agents as input-output systems. The complexity can range from simple LLM calls to multi-step reasoning loops with function calling.</li>
+                <li>Let's also define a core loop: environment (state + rules) → agent → output</li>
+                <li>With these building blocks in place, we can simulate very complex systems. </li>
+                <li>We can simulate youtube and reddit comment sections, agents working in groups, games like bluff, prisoner's dilemma, chess etc.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
