@@ -16,7 +16,12 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from base.views import handler400, handler403, handler404, handler500
+from base.views import handler400, handler403, handler404, handler500, CustomLoginView
+
+admin.site.login = CustomLoginView.as_view(
+    template_name='registration/login.html',
+    next_page='admin:index'
+)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
