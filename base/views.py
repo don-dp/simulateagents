@@ -31,7 +31,7 @@ class SignupView(View):
     def get(self, request, *args, **kwargs):
         if request.user.is_authenticated:
             messages.info(request, 'You are already logged in, so you can\'t signup. If you want to create a new account logout first.')
-            return redirect('homepage')
+            return redirect('main:home')
         
         form = UserCreationForm()
         return render(request, 'registration/signup.html', {'form': form})
@@ -39,7 +39,7 @@ class SignupView(View):
     def post(self, request, *args, **kwargs):
         if request.user.is_authenticated:
             messages.info(request, 'You are already logged in, so you can\'t signup. If you want to create a new account, logout first.')
-            return redirect('homepage')
+            return redirect('main:home')
         
         if not check_turnstile(request):
             return redirect('signup')
@@ -53,7 +53,7 @@ class SignupView(View):
             user = form.save()
             login(request, user)
             messages.info(request, 'Successfully registered. You can update your email in the profile page.')
-            return redirect('homepage')
+            return redirect('main:home')
         return render(request, 'registration/signup.html', {'form': form})
 
 class ProfileView(LoginRequiredMixin, View):
