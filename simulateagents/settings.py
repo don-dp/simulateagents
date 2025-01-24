@@ -25,6 +25,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('SECRET_KEY')
+OPENROUTER_API_KEY = os.getenv('OPENROUTER_API_KEY')
 TURNSTILE_SECRET_KEY = os.getenv('TURNSTILE_SECRET_KEY')
 TURNSTILE_SITE_KEY = os.getenv('TURNSTILE_SITE_KEY')
 
@@ -132,3 +133,4 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_REDIRECT_URL = 'profile'
+LOGIN_URL = 'login'

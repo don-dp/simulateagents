@@ -14,12 +14,14 @@
                 <li class="nav-item">
                     <a class="nav-link {% if base_path == '' %}active{% endif %}" {% if base_path == '' %}aria-current="page"{% endif %} href="/">Home</a>
                 </li>
-                {% if user.is_authenticated %}
-                {% comment %}
-                <li class="nav-item">
-                    <a class="nav-link {% if base_path == 'myposts' %}active{% endif %}" {% if base_path == 'myposts' %}aria-current="page"{% endif %} href="/myposts/">My Posts</a>
+                <li class="nav-item"></li>
+                    <a class="nav-link {% if base_path == 'simulations' %}active{% endif %}" {% if base_path == 'simulations' %}aria-current="page"{% endif %} href="{% url 'main:simulation_list' %}">Simulations</a>
                 </li>
-                {% endcomment %}
+                <li class="nav-item">
+                    <a class="nav-link {% if base_path == 'simulations/create' %}active{% endif %}" {% if base_path == 'simulations/create' %}aria-current="page"{% endif %} href="{% url 'main:create_simulation' %}">Create</a>
+                </li>
+                {% if user.is_authenticated %}
+                
                 {% endif %}
             </ul>
             <ul class="navbar-nav">

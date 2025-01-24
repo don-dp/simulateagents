@@ -1,0 +1,18 @@
+{% extends 'base/base.html' %}
+
+{% block content %}
+<h1>Simulations</h1>
+<ul class="list-group">
+    {% for data in simulation_data %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+                <a href="{{ data.url }}">{{ data.simulation }}</a>
+                <span class="text-muted ms-2">by {{ data.simulation.user.username }}</span>
+            </div>
+            <small class="text-muted">Last updated: {{ data.simulation.updated_at|date:"F j, Y, g:i a" }}</small>
+        </li>
+    {% empty %}
+        <li class="list-group-item">No active simulations found.</li>
+    {% endfor %}
+</ul>
+{% endblock %}
