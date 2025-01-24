@@ -87,11 +87,15 @@ class CreateSimulationView(LoginRequiredMixin, View):
         environment_id = request.POST.get('environment')
         prompt = request.POST.get('prompt')
         
-        initial_state = {
-            'title': request.POST.get('article_title'),
-            'content': request.POST.get('article_content'),
-            'comments': []
-        }
+        environment = Environment.objects.get(id=environment_id)
+        initial_state = {}
+        
+        if environment.name == 'comment':
+            initial_state = {
+                'title': request.POST.get('article_title'),
+                'content': request.POST.get('article_content'),
+                'comments': []
+            }
         
         simulation = Simulation.objects.create(
             title=title,

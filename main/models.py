@@ -10,7 +10,6 @@ def validate_json_size(value):
 class Environment(models.Model):
     name = models.CharField(max_length=100)
     rules = models.TextField(validators=[MaxLengthValidator(100000)])
-    initial_state = models.JSONField(default=dict, blank=True, validators=[validate_json_size])
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
