@@ -1,0 +1,52 @@
+{% extends "base/base.html" %}
+
+{% block title %}Create Chess Simulation{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>Create Chess Simulation</h2>
+            <form method="post">
+                {% csrf_token %}
+
+                <div id="agents-container">
+                    <h4>Agents</h4>
+                    <div class="agent-inputs mb-3">
+                        <!-- White Player -->
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h5>White Player</h5>
+                                <div class="mt-2">
+                                    <select class="form-select" name="ai_model_ids[]" id="white-model" required>
+                                        <option value="">Select an AI Model</option>
+                                        {% for model in ai_models %}
+                                        <option value="{{ model.id }}">{{ model.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Black Player -->
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h5>Black Player</h5>
+                                <div class="mt-2">
+                                    <select class="form-select" name="ai_model_ids[]" id="black-model" required>
+                                        <option value="">Select an AI Model</option>
+                                        {% for model in ai_models %}
+                                        <option value="{{ model.id }}">{{ model.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Create Simulation</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

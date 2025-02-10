@@ -38,10 +38,10 @@ def generate_ai_comment(simulation, agent):
     {agent.prompt}
 
     Respond with a comment about the article and nothing else, no quotes or anything else."""
-
+    
     print("Sending request to Openrouter")
     response = client.chat.completions.create(
-        model="meta-llama/llama-3.3-70b-instruct",
+        model=agent.ai_model.value,
         messages=[
             {"role": "system", "content": system_message},
             {"role": "user", "content": "What are your thoughts on this article?"}

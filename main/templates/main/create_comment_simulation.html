@@ -2,14 +2,14 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h1>Edit Simulation</h1>
+    <h1>Create New Simulation</h1>
     
     <form method="post" class="mt-4">
         {% csrf_token %}
         
         <div class="mb-3">
             <label for="title" class="form-label">Simulation Title</label>
-            <input type="text" class="form-control border" id="title" name="title" required value="{{ simulation.title }}">
+            <input type="text" class="form-control border" id="title" name="title" required autofocus>
         </div>
 
         <div class="mb-3">
@@ -17,16 +17,14 @@
             <select class="form-select border" id="environment" name="environment" required>
                 <option value="">Select an environment</option>
                 {% for env in environments %}
-                    <option value="{{ env.id }}" {% if env.id == simulation.environment.id %}selected{% endif %}>
-                        {{ env.name }}
-                    </option>
+                    <option value="{{ env.id }}">{{ env.name }}</option>
                 {% endfor %}
             </select>
         </div>
 
         <div class="mb-3">
             <label for="prompt" class="form-label">Simulation Prompt</label>
-            <textarea class="form-control border" id="prompt" name="prompt" rows="3" required>{{ simulation.prompt }}</textarea>
+            <textarea class="form-control border" id="prompt" name="prompt" rows="3" required></textarea>
         </div>
 
         <div class="card mb-3">
@@ -36,11 +34,11 @@
             <div class="card-body">
                 <div class="mb-3">
                     <label for="article_title" class="form-label">Article Title</label>
-                    <input type="text" class="form-control border" id="article_title" name="article_title" required value="{{ simulation.current_state.title }}">
+                    <input type="text" class="form-control border" id="article_title" name="article_title" required>
                 </div>
                 <div class="mb-3">
                     <label for="article_content" class="form-label">Article Content</label>
-                    <textarea class="form-control border" id="article_content" name="article_content" rows="5" required>{{ simulation.current_state.content }}</textarea>
+                    <textarea class="form-control border" id="article_content" name="article_content" rows="5" required></textarea>
                 </div>
             </div>
         </div>
@@ -53,26 +51,22 @@
                 </button>
             </div>
             <div class="card-body" id="agents-container">
-                {% for agent in simulation.agents.all %}
                 <div class="agent-entry mb-3">
                     <div class="row">
-                        <input type="hidden" name="agent_ids[]" value="{{ agent.id }}">
                         <div class="col-md-4">
                             <label class="form-label">Agent Name</label>
-                            <input type="text" class="form-control border" name="agent_names[]" required value="{{ agent.name }}">
+                            <input type="text" class="form-control border" name="agent_names[]" required>
                         </div>
                         <div class="col-md-8">
                             <label class="form-label">Agent Prompt</label>
-                            <textarea class="form-control border" name="agent_prompts[]" rows="2" required>{{ agent.prompt }}</textarea>
+                            <textarea class="form-control border" name="agent_prompts[]" rows="2" required></textarea>
                         </div>
                     </div>
-                    <button type="button" class="btn btn-danger btn-sm mt-2 remove-agent">Remove Agent</button>
                 </div>
-                {% endfor %}
             </div>
         </div>
 
-        <button type="submit" class="btn btn-primary">Update Simulation</button>
+        <button type="submit" class="btn btn-primary">Create Simulation</button>
     </form>
 </div>
 
@@ -83,7 +77,6 @@ document.getElementById('add-agent').addEventListener('click', function() {
     newAgent.className = 'agent-entry mb-3';
     newAgent.innerHTML = `
         <div class="row">
-            <input type="hidden" name="agent_ids[]" value="">
             <div class="col-md-4">
                 <label class="form-label">Agent Name</label>
                 <input type="text" class="form-control border" name="agent_names[]" required>
@@ -97,16 +90,8 @@ document.getElementById('add-agent').addEventListener('click', function() {
     `;
     container.appendChild(newAgent);
 
-    // Add remove functionality
     newAgent.querySelector('.remove-agent').addEventListener('click', function() {
         newAgent.remove();
-    });
-});
-
-// Add remove functionality to existing agents
-document.querySelectorAll('.remove-agent').forEach(button => {
-    button.addEventListener('click', function() {
-        this.closest('.agent-entry').remove();
     });
 });
 </script>

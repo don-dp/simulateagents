@@ -61,7 +61,9 @@ class SimulationListView(View):
             url = ""
             if simulation.environment.name == 'comment':
                 url = reverse('main:comment_simulation', kwargs={'simulation_id': simulation.id})
-                print(url)
+            elif simulation.environment.name == 'chess':
+                url = reverse('main:chess_simulation', kwargs={'simulation_id': simulation.id})
+                
             simulation_data.append({
                 'simulation': simulation,
                 'url': url
@@ -72,8 +74,14 @@ class SimulationListView(View):
         }
         return render(request, self.template_name, context)
 
-class CreateSimulationView(LoginRequiredMixin, View):
+class CreateSimulationView(View):
     template_name = 'main/create_simulation.html'
+    
+    def get(self, request, *args, **kwargs):
+        return render(request, self.template_name)
+
+class CreateCommentSimulationView(LoginRequiredMixin, View):
+    template_name = 'main/create_comment_simulation.html'
     
     def get(self, request, *args, **kwargs):
         environments = Environment.objects.all()
@@ -108,13 +116,13 @@ class CreateSimulationView(LoginRequiredMixin, View):
         agent_names = request.POST.getlist('agent_names[]')
         agent_prompts = request.POST.getlist('agent_prompts[]')
         
-        for name, prompt in zip(agent_names, agent_prompts):
-            if name and prompt:
-                agent = Agent.objects.create(
+        for name, agent_prompt in zip(agent_names, agent_prompts):
+            if name and agent_prompt:
+                Agent.objects.create(
+                    simulation=simulation,
                     name=name,
-                    prompt=prompt
+                    prompt=agent_prompt
                 )
-                simulation.agents.add(agent)
         
         messages.success(request, f'Simulation "{title}" created successfully.')
         
@@ -122,8 +130,8 @@ class CreateSimulationView(LoginRequiredMixin, View):
             return redirect('main:comment_simulation', simulation_id=simulation.id)
         return redirect('main:simulation_list')
 
-class EditSimulationView(LoginRequiredMixin, View):
-    template_name = 'main/edit_simulation.html'
+class EditCommentSimulationView(LoginRequiredMixin, View):
+    template_name = 'main/edit_comment_simulation.html'
     
     def get(self, request, simulation_id, *args, **kwargs):
         simulation = get_object_or_404(Simulation, id=simulation_id)
@@ -160,26 +168,27 @@ class EditSimulationView(LoginRequiredMixin, View):
         
         simulation.save()
         
-        existing_agents = list(simulation.agents.all())
-        simulation.agents.clear()
-        
         agent_names = request.POST.getlist('agent_names[]')
         agent_prompts = request.POST.getlist('agent_prompts[]')
         agent_ids = request.POST.getlist('agent_ids[]')
         
-        for name, prompt, agent_id in zip(agent_names, agent_prompts, agent_ids):
-            if name and prompt:
+        updated_agent_ids = []
+        for name, agent_prompt, agent_id in zip(agent_names, agent_prompts, agent_ids):
+            if name and agent_prompt:
                 if agent_id:
-                    agent = Agent.objects.get(id=agent_id)
+                    agent = Agent.objects.get(id=agent_id, simulation=simulation)
                     agent.name = name
-                    agent.prompt = prompt
+                    agent.prompt = agent_prompt
                     agent.save()
                 else:
                     agent = Agent.objects.create(
+                        simulation=simulation,
                         name=name,
-                        prompt=prompt
+                        prompt=agent_prompt
                     )
-                simulation.agents.add(agent)
+                updated_agent_ids.append(agent.id)
+        
+        simulation.agents.exclude(id__in=updated_agent_ids).delete()
         
         messages.success(request, f'Simulation "{simulation.title}" updated successfully.')
         

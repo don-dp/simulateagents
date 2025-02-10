@@ -17,9 +17,32 @@ class Environment(models.Model):
         return self.name
 
 
+class Simulation(models.Model):
+    title = models.CharField(max_length=200)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    environment = models.ForeignKey(Environment, on_delete=models.CASCADE)
+    prompt = models.TextField(blank=True, null=True, validators=[MaxLengthValidator(100000)])
+    current_state = models.JSONField(default=dict, blank=True, validators=[validate_json_size])
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.title
+    
+class AIModel(models.Model):
+    name = models.CharField(max_length=300)
+    value = models.CharField(max_length=300)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
 class Agent(models.Model):
     name = models.CharField(max_length=100)
-    prompt = models.TextField(validators=[MaxLengthValidator(100000)])
+    prompt = models.TextField(blank=True, null=True, validators=[MaxLengthValidator(100000)])
+    ai_model = models.ForeignKey(AIModel, on_delete=models.CASCADE)
+    simulation = models.ForeignKey(Simulation, on_delete=models.CASCADE, related_name='agents')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -27,26 +50,11 @@ class Agent(models.Model):
         return self.name
 
 
-class Simulation(models.Model):
-    title = models.CharField(max_length=200)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
-    environment = models.ForeignKey(Environment, on_delete=models.CASCADE)
-    agents = models.ManyToManyField(Agent)
-    prompt = models.TextField(validators=[MaxLengthValidator(100000)])
-    current_state = models.JSONField(default=dict, blank=True, validators=[validate_json_size])
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    active = models.BooleanField(default=True)
-
-    def __str__(self):
-        return self.title
-
-
 class Turn(models.Model):
     simulation = models.ForeignKey(Simulation, on_delete=models.CASCADE)
     agent = models.ForeignKey(Agent, on_delete=models.CASCADE)
-    input_data = models.TextField(validators=[MaxLengthValidator(100000)])
-    output_data = models.TextField(validators=[MaxLengthValidator(100000)])
+    input_data = models.JSONField(default=dict, blank=True, validators=[validate_json_size])
+    output_data = models.JSONField(default=dict, blank=True, validators=[validate_json_size])
     state_after_turn = models.JSONField(default=dict, blank=True, validators=[validate_json_size])
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

@@ -1,0 +1,241 @@
+{% extends "base/base.html" %}
+
+{% block title %}{{ simulation.title }}{% endblock %}
+
+{% block content %}
+<!-- Load jQuery first (required dependency) -->
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"
+        integrity="sha384-ZvpUoO/+PpLXR1lu4jmpXWu80pZlYUAfxl5NsBMWOEPSjUn/6Z/hRTt8+pR6L4N2"
+        crossorigin="anonymous"></script>
+
+<!-- Load chessboard.js and its CSS -->
+<link rel="stylesheet"
+      href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css"
+      integrity="sha384-q94+BZtLrkL1/ohfjR8c6L+A6qzNH9R2hBLwyoAfu3i/WCvQjzL2RQJ3uNHDISdU"
+      crossorigin="anonymous">
+
+<script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"
+        integrity="sha384-8Vi8VHwn3vjQ9eUHUxex3JSN/NFqUg3QbPyX8kWyb93+8AC/pPWTzj+nHtbC5bxD"
+        crossorigin="anonymous"></script>
+
+<style>
+    .board-container {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+</style>
+
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>{{ simulation.title }}</h2>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header" role="button" data-bs-toggle="collapse" data-bs-target="#agentsCollapse">
+            <div class="d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">Players</h4>
+                <span class="text-muted">Click to expand</span>
+            </div>
+        </div>
+        <div class="collapse" id="agentsCollapse">
+            <div class="card-body">
+                {% for agent in agents %}
+                <div class="agent-info mb-3">
+                    <h5>{{ agent.name }} ({% if forloop.first %}White{% else %}Black{% endif %})</h5>
+                    <div class="bg-light p-3 rounded">
+                        <pre class="mb-0" style="white-space: pre-wrap;">{{ agent.prompt }}</pre>
+                    </div>
+                </div>
+                {% if not forloop.last %}<hr>{% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="board-container mb-4">
+        <div id="board" style="width: 100%"></div>
+    </div>
+
+    <div class="text-center mb-4">
+        <h4 class="mb-3">
+            Current Turn: <span id="currentTurn">
+                {% if is_game_over %}
+                    Game Over
+                {% else %}
+                    {% if 'w' in fen %}White{% else %}Black{% endif %}
+                {% endif %}
+            </span>
+            | Status: <span id="gameStatus">{{ game_status }}</span>
+        </h4>
+        <div class="btn-group">
+            <button id="makeMove" class="btn btn-primary me-2">Make Move</button>
+            <button id="playButton" class="btn btn-success">
+                Play Moves <span id="moveCounter">0/{{ turns|length }}</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header" role="button" data-bs-toggle="collapse" data-bs-target="#turnsCollapse">
+            <div class="d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">Game Moves</h4>
+                <span class="text-muted">Click to expand</span>
+            </div>
+        </div>
+        <div class="collapse show" id="turnsCollapse">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Player</th>
+                                <th>Move</th>
+                                <th>Explanation</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for turn in turns %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ turn.agent.name }}</td>
+                                    <td>{{ turn.output_data.move }}</td>
+                                    <td>{{ turn.output_data.explanation }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    var board = Chessboard('board', {
+        position: '{{ fen|safe }}',
+        draggable: false,
+        pieceTheme : 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
+    });
+
+    var moves = [
+        'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+        {% for turn in turns %}
+            '{{ turn.state_after_turn.fen|safe }}',
+        {% endfor %}
+    ];
+    
+    var currentMove = moves.length - 1;
+    var isPlaying = false;
+    var autoMoving = false;
+
+    $('#playButton').click(function() {
+        if (isPlaying) return;
+        
+        if (currentMove >= moves.length - 1) {
+            currentMove = 0;
+        }
+        
+        isPlaying = true;
+        
+        function playNextMove() {
+            if (currentMove >= moves.length) {
+                isPlaying = false;
+                return;
+            }
+            
+            board.position(moves[currentMove]);
+            $('#moveCounter').text(currentMove + '/' + (moves.length - 1));
+            
+            currentMove++;
+            if (currentMove < moves.length) {
+                setTimeout(playNextMove, 1000);
+            } else {
+                isPlaying = false;
+            }
+        }
+        
+        playNextMove();
+    });
+
+    async function autoMakeMove() {
+        if (!autoMoving) return;
+
+        try {
+            const response = await fetch('{% url "main:chess_simulation" simulation.id %}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            });
+            const data = await response.json();
+            
+            if (data.success) {
+                setTimeout(() => {
+                    board.position(data.state.fen);
+                }, 100);
+                
+                const isWhiteTurn = data.state.fen.includes(' w ');
+                $('#currentTurn').text(isWhiteTurn ? 'White' : 'Black');
+                $('#gameStatus').text(data.state.status || 'Ongoing');
+                
+                const tbody = document.querySelector('tbody');
+                const moveCount = tbody.children.length + 1;
+                const row = `
+                    <tr>
+                        <td>${moveCount}</td>
+                        <td>${data.turn.agent_name}</td>
+                        <td>${data.turn.move}</td>
+                        <td>${data.turn.explanation}</td>
+                    </tr>
+                `;
+                tbody.insertAdjacentHTML('beforeend', row);
+                
+                moves.push(data.state.fen);
+                currentMove = moves.length - 1;
+                $('#moveCounter').text(`${currentMove}/${moves.length - 1}`);
+                
+                autoMakeMove();
+            } else if (data.error) {
+                alert(data.error);
+                autoMoving = false;
+                $('#makeMove').text("Make Move");
+            } else if (data.message) {
+                board.position(data.state.fen);
+                $('#currentTurn').text('Game Over');
+                $('#gameStatus').text(data.state.status);
+                autoMoving = false;
+                $('#makeMove').text("Make Move");
+                
+                setTimeout(() => {
+                    alert(data.message);
+                }, 100);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred while making the move');
+            autoMoving = false;
+            $('#makeMove').text("Make Move");
+        }
+    }
+
+    $('#makeMove').click(function() {
+        if (autoMoving) {
+            autoMoving = false;
+            $('#makeMove').text("Make Move");
+        } else {
+            autoMoving = true;
+            $('#makeMove').text("Pause Make Move");
+            autoMakeMove();
+        }
+    });
+
+    $(window).resize(function() {
+        board.resize();
+    });
+});
+</script>
+{% endblock %} 
