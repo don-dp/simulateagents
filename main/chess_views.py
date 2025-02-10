@@ -67,7 +67,6 @@ class ChessSimulationView(View):
         white_agent = Agent.objects.get(id=simulation.current_state['white_agent_id'])
         black_agent = Agent.objects.get(id=simulation.current_state['black_agent_id'])
         agents = [white_agent, black_agent]
-        
         context = {
             'simulation': simulation,
             'agents': agents,
@@ -77,24 +76,23 @@ class ChessSimulationView(View):
             'is_game_over': simulation.current_state.get('is_game_over', False),
             'turns': Turn.objects.filter(simulation=simulation).order_by('created_at')
         }
-        
         return render(request, self.template_name, context)
     
     @method_decorator(login_required)
     def post(self, request, simulation_id, *args, **kwargs):
         simulation = get_object_or_404(Simulation, id=simulation_id)
-        
         if simulation.user != request.user:
             return JsonResponse({
                 'error': 'You do not have permission to modify this simulation.'
             }, status=403)
-        
+        acquired, lock_timestamp = simulation.acquire_lock(timeout=30)
+        if not acquired:
+            return JsonResponse({
+                'error': 'Another request is processing this simulation. Please try again later.'
+            }, status=409)
         try:
-            turn, new_state = generate_chess_move(simulation)
+            turn, new_state = generate_chess_move(simulation, lock_timestamp)
             if turn:
-                simulation.current_state = new_state
-                simulation.save()
-                
                 return JsonResponse({
                     'success': True,
                     'state': new_state,
@@ -115,3 +113,5 @@ class ChessSimulationView(View):
             return JsonResponse({
                 'error': str(e)
             }, status=400)
+        finally:
+            simulation.release_lock()

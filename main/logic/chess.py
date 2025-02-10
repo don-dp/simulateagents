@@ -4,7 +4,7 @@ from django.conf import settings
 from openai import OpenAI
 from main.models import Turn, Agent
 
-def generate_chess_move(simulation):
+def generate_chess_move(simulation, lock_timestamp):
     """
     Generate the next chess move for the given simulation.
     
@@ -58,7 +58,6 @@ Remember:
 3. The move must be legal
 4. Explain your strategic thinking in the explanation field"""
     
-    print(agent.ai_model.value)
     response = client.chat.completions.create(
         model=agent.ai_model.value,
         messages=[
@@ -69,9 +68,7 @@ Remember:
     )
 
     try:
-        print(response.choices[0].message.content)
         response_data = json.loads(response.choices[0].message.content)
-        print(response_data)
         move_uci = response_data['move'].strip()
         explanation = response_data['explanation'].strip()
     except (json.JSONDecodeError, KeyError) as e:
@@ -105,6 +102,9 @@ Remember:
         'status': get_game_status(board),
         'is_game_over': board.is_game_over()
     }
+    
+    if not simulation.is_lock_valid(timeout=30):
+        raise ValueError("Lock expired, please try again.")
     
     turn = Turn.objects.create(
         simulation=simulation,
