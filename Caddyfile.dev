@@ -6,7 +6,7 @@
     encode gzip
 
     handle_path /static/* {
-        root * /static
+        root * /staticfiles
         file_server
     }
 

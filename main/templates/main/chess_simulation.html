@@ -1,4 +1,5 @@
 {% extends "base/base.html" %}
+{% load static %}
 
 {% block title %}{{ simulation.title }}{% endblock %}
 
@@ -118,7 +119,7 @@ $(document).ready(function() {
     var board = Chessboard('board', {
         position: '{{ fen|safe }}',
         draggable: false,
-        pieceTheme : 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
+        pieceTheme : '{% static "main/chesspieces/wikipedia/" %}{piece}.png'
     });
 
     var moves = [
