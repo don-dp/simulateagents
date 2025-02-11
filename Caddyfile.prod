@@ -1,19 +1,13 @@
 simulateagents.com www.simulateagents.com {
-    reverse_proxy web:8000 {
-        header_up X-Forwarded-Proto {scheme}
-        header_up X-Forwarded-For {remote}
-        header_up Host {host}
-        
-        # WebSocket support
-        transport http {
-            versions h1 h2c h2
-        }
-    }
     encode gzip
+    
     handle_path /static/* {
         root * /static
         file_server
     }
+    
+    reverse_proxy web:8000
+    
     log {
         output file /var/log/caddy/access.log
     }
