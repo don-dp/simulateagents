@@ -165,7 +165,7 @@ $(document).ready(function() {
         if (!autoMoving) return;
 
         try {
-            const response = await fetch('{% url "main:chess_simulation" simulation.id %}', {
+            const response = await fetch('{% url "main:chess_simulation_move" simulation.id %}', {
                 method: 'POST',
                 headers: {
                     'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value

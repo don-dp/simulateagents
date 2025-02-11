@@ -7,6 +7,7 @@ from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from main.logic.chess import generate_chess_move
 from django.http import JsonResponse
+from asgiref.sync import sync_to_async
 
 class CreateChessSimulationView(LoginRequiredMixin, View):
     template_name = 'main/create_chess_simulation.html'
@@ -77,21 +78,29 @@ class ChessSimulationView(View):
             'turns': Turn.objects.filter(simulation=simulation).order_by('created_at')
         }
         return render(request, self.template_name, context)
-    
-    @method_decorator(login_required)
-    def post(self, request, simulation_id, *args, **kwargs):
-        simulation = get_object_or_404(Simulation, id=simulation_id)
-        if simulation.user != request.user:
+
+class ChessSimulationMoveView(View):
+    async def post(self, request, simulation_id, *args, **kwargs):
+        is_authenticated = await sync_to_async(lambda: request.user.is_authenticated)()
+        if not is_authenticated:
+            return JsonResponse({
+                'error': 'Authentication credentials were not provided.'
+            }, status=401)
+        
+        simulation = await sync_to_async(get_object_or_404)(Simulation, id=simulation_id)
+        user_id = await sync_to_async(lambda: request.user.id)()
+        if simulation.user_id != user_id:
             return JsonResponse({
                 'error': 'You do not have permission to modify this simulation.'
             }, status=403)
-        acquired, lock_timestamp = simulation.acquire_lock(timeout=30)
+        
+        acquired, lock_timestamp = await sync_to_async(simulation.acquire_lock)(timeout=30)
         if not acquired:
             return JsonResponse({
                 'error': 'Another request is processing this simulation. Please try again later.'
             }, status=409)
         try:
-            turn, new_state = generate_chess_move(simulation, lock_timestamp)
+            turn, new_state = await sync_to_async(generate_chess_move)(simulation, lock_timestamp)
             if turn:
                 return JsonResponse({
                     'success': True,
@@ -105,7 +114,7 @@ class ChessSimulationView(View):
             else:
                 return JsonResponse({
                     'success': False,
-                    'message': new_state['status'],
+                    'message': new_state.get('status', ''),
                     'state': new_state,
                     'is_game_over': True
                 })
@@ -114,4 +123,4 @@ class ChessSimulationView(View):
                 'error': str(e)
             }, status=400)
         finally:
-            simulation.release_lock()
+            await sync_to_async(simulation.release_lock)()
