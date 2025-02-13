@@ -70,7 +70,15 @@ Remember:
     )
 
     try:
-        response_data = json.loads(response.choices[0].message.content)
+        #print(agent.ai_model.value)
+        content = response.choices[0].message.content
+        #accommodate gemini quirks
+        if content.startswith("```json"):
+            content = content[len("```json"):].strip()
+        if content.endswith("```"):
+            content = content[:-len("```")].strip()
+        #print(content)
+        response_data = json.loads(content)
         move_uci = response_data['move'].strip()
         explanation = response_data['explanation'].strip()
     except (json.JSONDecodeError, KeyError) as e:
