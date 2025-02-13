@@ -94,7 +94,7 @@ class ChessSimulationMoveView(View):
                 'error': 'You do not have permission to modify this simulation.'
             }, status=403)
         
-        acquired, lock_timestamp = await sync_to_async(simulation.acquire_lock)(timeout=30)
+        acquired, lock_timestamp = await sync_to_async(simulation.acquire_lock)(timeout=60)
         if not acquired:
             return JsonResponse({
                 'error': 'Another request is processing this simulation. Please try again later.'

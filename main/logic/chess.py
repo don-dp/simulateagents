@@ -36,7 +36,9 @@ def generate_chess_move(simulation, lock_timestamp):
 
     client = OpenAI(
         api_key=settings.OPENROUTER_API_KEY,
-        base_url="https://openrouter.ai/api/v1"
+        base_url="https://openrouter.ai/api/v1",
+        timeout=60.0,
+        max_retries=0
     )
 
     prompt = f"""You are playing as {current_color} in a chess game.
@@ -53,7 +55,7 @@ Analyze the position and make a move. Respond with a JSON object in this exact f
 }}
 
 Remember:
-1. Only provide the JSON object, no other text
+1. Only provide the JSON object, no other text, no surrounding triple backticks. Do not prefix or suffix the JSON object with anything like ```json or ``` as it will be fed into an api as it is.
 2. The move must be in UCI format (e.g., e2e4, g1f3)
 3. The move must be legal
 4. Explain your strategic thinking in the explanation field"""
@@ -103,7 +105,7 @@ Remember:
         'is_game_over': board.is_game_over()
     }
     
-    if not simulation.is_lock_valid(timeout=30):
+    if not simulation.is_lock_valid(timeout=60):
         raise ValueError("Lock expired, please try again.")
     
     turn = Turn.objects.create(
