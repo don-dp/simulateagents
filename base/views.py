@@ -34,9 +34,12 @@ class SignupView(View):
             return redirect('main:home')
         
         form = UserCreationForm()
+        messages.info(request, 'Signup is disabled for now.')
         return render(request, 'registration/signup.html', {'form': form})
 
     def post(self, request, *args, **kwargs):
+        return redirect('signup')
+        """
         if request.user.is_authenticated:
             messages.info(request, 'You are already logged in, so you can\'t signup. If you want to create a new account, logout first.')
             return redirect('main:home')
@@ -55,6 +58,7 @@ class SignupView(View):
             messages.info(request, 'Successfully registered. You can update your email in the profile page.')
             return redirect('main:home')
         return render(request, 'registration/signup.html', {'form': form})
+        """
 
 class ProfileView(LoginRequiredMixin, View):
     login_url = reverse_lazy('login')
