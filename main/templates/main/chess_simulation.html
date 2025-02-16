@@ -132,30 +132,47 @@ $(document).ready(function() {
     var currentMove = moves.length - 1;
     var isPlaying = false;
     var autoMoving = false;
+    var playTimeout = null;
 
     $('#playButton').click(function() {
-        if (isPlaying) return;
+        if (autoMoving) {
+            alert('Please stop the auto-move feature first');
+            return;
+        }
+
+        if (isPlaying) {
+            // Pause the playback
+            isPlaying = false;
+            clearTimeout(playTimeout);
+            $(this).html('Resume Moves <span id="moveCounter">' + currentMove + '/' + (moves.length - 1) + '</span>');
+            return;
+        }
         
         if (currentMove >= moves.length - 1) {
             currentMove = 0;
         }
         
         isPlaying = true;
+        $(this).html('Pause Moves <span id="moveCounter">' + currentMove + '/' + (moves.length - 1) + '</span>');
         
         function playNextMove() {
-            if (currentMove >= moves.length) {
+            if (!isPlaying || currentMove >= moves.length) {
                 isPlaying = false;
+                $('#playButton').html('Play Moves <span id="moveCounter">' + currentMove + '/' + (moves.length - 1) + '</span>');
                 return;
             }
             
             board.position(moves[currentMove]);
             $('#moveCounter').text(currentMove + '/' + (moves.length - 1));
             
-            currentMove++;
-            if (currentMove < moves.length) {
-                setTimeout(playNextMove, 1000);
+            if (currentMove < moves.length - 1) {
+                playTimeout = setTimeout(() => {
+                    currentMove++;
+                    playNextMove();
+                }, 2000);
             } else {
                 isPlaying = false;
+                $('#playButton').html('Play Moves <span id="moveCounter">' + currentMove + '/' + (moves.length - 1) + '</span>');
             }
         }
         
@@ -224,6 +241,11 @@ $(document).ready(function() {
     }
 
     $('#makeMove').click(function() {
+        if (isPlaying) {
+            alert('Please stop the move playback first');
+            return;
+        }
+
         if (autoMoving) {
             autoMoving = false;
             $('#makeMove').text("Make Move");
