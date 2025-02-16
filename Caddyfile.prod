@@ -1,4 +1,8 @@
-simulateagents.com www.simulateagents.com {
+www.simulateagents.com {
+    redir https://simulateagents.com{uri} 302
+}
+
+simulateagents.com {
     encode gzip
     
     handle_path /static/* {
